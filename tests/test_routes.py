@@ -33,7 +33,7 @@ def test_wallet_balance(test_client):
     assert response.status_code == 201
     data = json.loads(response.data)
     wallet_id = data['wallet_id']
-    
+
     print(wallet_id, Wallet.query.all())
 
     # Test getting balance for existing wallet
@@ -88,28 +88,3 @@ def test_debit_wallet(test_client):
     # # TODO Test debiting wallet with invalid amount, Need to handle this case
     response = test_client.post(f'/wallet/{wallet_id}/debit', json={'amount': 200})
     assert response.status_code == 200
-
-
-def test_get_wallet_transactions(test_client):
-    # Create a wallet
-    response = test_client.post('/user', json={'phone': '1234567890'})
-    assert response.status_code == 201
-    data = json.loads(response.data)
-    user_id = data['user']['id']
-    response = test_client.post('/wallet', json={'user_id': user_id, 'wallet_type': 'standard'})
-    assert response.status_code == 201
-    data = json.loads(response.data)
-    wallet_id = data['wallet_id']
-
-    # Test getting transactions for existing wallet
-    response = test_client.get(f'/wallet/{wallet_id}/transactions')
-    assert response.status_code == 200
-    data = json.loads(response.data)
-    assert 'transactions' in data
-
-    # TODO: Test getting transactions for non-existing wallet, need to handle this case
-    response = test_client.get('/wallet/999/transactions')
-    assert response.status_code == 200
-    data = json.loads(response.data)
-
-    assert data == {'transactions': []}

@@ -22,7 +22,7 @@ class WalletService:
             wallet.balance += amount
             transaction = Transaction(wallet_id=wallet_id, amount=amount,
                                       transaction_type='credit', timestamp=datetime.now(timezone.utc))
-            db.session.add(transaction)  
+            db.session.add(transaction)
             db.session.commit()
 
     @staticmethod
@@ -41,24 +41,3 @@ class WalletService:
     def get_wallet_balance(wallet_id):
         wallet = Wallet.query.filter_by(id=wallet_id).one()
         return wallet.balance
-
-    @staticmethod
-    def get_total_transactions_amount(wallet_id, start_date, end_date):
-        print(start_date)
-        # Filter transactions by wallet ID and timestamp range
-        total_credit = db.session.query(db.func.sum(Transaction.amount)).filter(
-            Transaction.wallet_id == wallet_id,
-            Transaction.transaction_type == 'credit',
-            Transaction.timestamp >= start_date,
-            Transaction.timestamp <= end_date
-        ).scalar() or 0.0
-
-        # Filter transactions by wallet ID and timestamp range
-        total_debit = db.session.query(db.func.sum(Transaction.amount)).filter(
-            Transaction.wallet_id == wallet_id,
-            Transaction.transaction_type == 'debit',
-            Transaction.timestamp >= start_date,
-            Transaction.timestamp <= end_date
-        ).scalar() or 0.0
-
-        return total_credit or 0.0, total_debit or 0.0

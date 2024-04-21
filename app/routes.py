@@ -3,6 +3,7 @@ from .models import db, User, Wallet, Transaction  # noqa: F401
 from flask_cors import CORS
 from services.user_service import UserService
 from services.wallet_service import WalletService
+from dateutil import parser
 
 
 main = Blueprint('main', __name__)
@@ -77,8 +78,23 @@ def debit_wallet(wallet_id):
 
 @main.route('/wallet/<int:wallet_id>/transactions', methods=['GET'])
 def get_wallet_transactions(wallet_id):
+    start_date = request.args.get('start_date')
+    end_date = request.args.get('end_date')
+
     try:
-        transactions = Transaction.query.filter_by(wallet_id=wallet_id).all()
-        return jsonify({'transactions': [{'id': t.id, 'amount': t.amount, 'transaction_type': t.transaction_type, 'timestamp': t.timestamp} for t in transactions]}), 200
+        query = Transaction.query.filter_by(wallet_id=wallet_id)
+
+        if start_date:
+            start_date = parser.parse(start_date).date()
+            query = query.filter(Transaction.timestamp >= start_date)
+
+        if end_date:
+            end_date = parser.parse(end_date).date()
+            query = query.filter(Transaction.timestamp <= end_date)
+
+            transactions = [{'id': t.id, 'wallet_id': t.wallet_id, 'amount': t.amount,
+                             'transaction_type': t.transaction_type, 'timestamp': t.timestamp.isoformat()} for t in query.all()]
+
+            return jsonify({'transactions': transactions}), 200
     except Exception:
         return jsonify({'error': 'Cannot show the transactions for this wallet. It may not have any transactions!'}), 400

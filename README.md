@@ -124,11 +124,7 @@ curl --location 'http://127.0.0.1:1970/wallet/1/debit' \
 > 6. View Transactions
 
 ```bash
-curl --location --request GET 'http://127.0.0.1:1970/wallet/1/transactions' \
---header 'Content-Type: application/json' \
---data '{
-    "amount": 300
-}'
+curl --location 'http://127.0.0.1:1970/wallet/1/transactions?null=null&start_date=2020-06-21&end_date=2025-06-21'
 ```
 
 **Response**
@@ -139,20 +135,44 @@ curl --location --request GET 'http://127.0.0.1:1970/wallet/1/transactions' \
         {
             "amount": 10000.0,
             "id": 1,
-            "timestamp": "Sun, 21 Apr 2024 22:11:31 GMT",
-            "transaction_type": "credit"
+            "timestamp": "2024-04-21T22:11:31.995606",
+            "transaction_type": "credit",
+            "wallet_id": 1
         },
         {
             "amount": 300.0,
             "id": 2,
-            "timestamp": "Sun, 21 Apr 2024 22:12:37 GMT",
-            "transaction_type": "debit"
+            "timestamp": "2024-04-21T22:12:37.804476",
+            "transaction_type": "debit",
+            "wallet_id": 1
         },
         {
             "amount": 1400.0,
             "id": 3,
-            "timestamp": "Sun, 21 Apr 2024 22:16:11 GMT",
-            "transaction_type": "credit"
+            "timestamp": "2024-04-21T22:16:11.808685",
+            "transaction_type": "credit",
+            "wallet_id": 1
+        },
+        {
+            "amount": 1400.0,
+            "id": 4,
+            "timestamp": "2024-04-21T22:28:12.668519",
+            "transaction_type": "credit",
+            "wallet_id": 1
+        },
+        {
+            "amount": 1400.0,
+            "id": 5,
+            "timestamp": "2024-04-21T22:28:26.168124",
+            "transaction_type": "credit",
+            "wallet_id": 1
+        },
+        {
+            "amount": 1400.0,
+            "id": 6,
+            "timestamp": "2024-04-21T22:28:26.951352",
+            "transaction_type": "credit",
+            "wallet_id": 1
         }
     ]
 }
