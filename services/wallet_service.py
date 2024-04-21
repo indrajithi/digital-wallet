@@ -13,3 +13,24 @@ class WalletService:
         db.session.add(new_wallet)
         db.session.commit()
         return new_wallet, None
+
+    @staticmethod
+    def credit_wallet(wallet_id, amount):
+        with db.session.begin_nested():
+            wallet = Wallet.query.filter_by(id=wallet_id).with_for_update().one()
+            wallet.balance += amount
+            db.session.commit()
+
+    @staticmethod
+    def debit_wallet(wallet_id, amount):
+        with db.session.begin_nested():
+            wallet = Wallet.query.filter_by(id=wallet_id).with_for_update().one()
+            if wallet.balance - amount < wallet.minimum_balance:
+                raise ValueError("Debit amount exceeds minimum balance")
+            wallet.balance -= amount
+            db.session.commit()
+
+    @staticmethod
+    def get_wallet_balance(wallet_id):
+        wallet = Wallet.query.filter_by(id=wallet_id).one()
+        return wallet.balance
