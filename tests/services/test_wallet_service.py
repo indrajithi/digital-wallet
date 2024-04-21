@@ -1,6 +1,6 @@
 import pytest
 import concurrent.futures
-from app.models import User, Wallet
+from app.models import User, Wallet, Transaction
 from services.wallet_service import WalletService
 from unittest.mock import patch
 
@@ -72,24 +72,43 @@ class TestWalletTransactions(object):
             wallet = Wallet(user_id=1, wallet_type='standard', balance=100)
             test_db.session.add(wallet)
             test_db.session.commit()
+
             WalletService.credit_wallet(wallet.id, 50)
+            transaction = Transaction.query.filter_by(wallet_id=wallet.id).first()
+
             assert WalletService.get_wallet_balance(wallet.id) == 150
+            assert transaction.amount == 50
+            assert transaction.transaction_type == 'credit'
 
     def test_debit_wallet(self, test_app, test_db):
         with test_app.app_context():
             wallet = Wallet(user_id=1, wallet_type='standard', balance=100)
             test_db.session.add(wallet)
             test_db.session.commit()
+
             WalletService.debit_wallet(wallet.id, 30)
+            transaction = Transaction.query.filter_by(wallet_id=wallet.id).first()
+
+            assert transaction.amount == 30
+            assert transaction.transaction_type == 'debit'
             assert WalletService.get_wallet_balance(wallet.id) == 70
-    
+
+    def test_debit_transaction_minimum_balance(self, test_app, test_db):
+        with test_app.app_context():
+            wallet = Wallet(user_id=1, wallet_type='standard', balance=100, minimum_balance=50)
+            test_db.session.add(wallet)
+            test_db.session.commit()
+            with pytest.raises(ValueError) as exc_info:
+                WalletService.debit_wallet(wallet.id, 60)  # Assuming X = 60
+
+            assert str(exc_info.value) == "Debit amount exceeds minimum balance"
+
     @patch('services.wallet_service.WalletService.debit_wallet')
     def test_debit_wallet_concurrency(self, mock_debit_wallet, test_app, test_db):
         wallet = Wallet(user_id=1, wallet_type='new', balance=100, minimum_balance=10)
         test_db.session.add(wallet)
         test_db.session.commit()
-        
-        # Define the behavior of the mock
+
         call_counter = [0]  # List to store the call count
 
         def mock_debit(wallet_id, amount):
@@ -103,7 +122,7 @@ class TestWalletTransactions(object):
 
         # Apply the mocked function to the patch
         mock_debit_wallet.side_effect = mock_debit
-        
+
         # Simulate concurrent debit transactions
         with test_app.app_context():
             with concurrent.futures.ThreadPoolExecutor() as executor:
@@ -112,4 +131,3 @@ class TestWalletTransactions(object):
         # Verify that only one debit transaction succeeds
         successful_transactions = [result for result in results if result is None]
         assert len(successful_transactions) == 1
-

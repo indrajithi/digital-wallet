@@ -1,5 +1,6 @@
-from app.models import Wallet
+from app.models import Wallet, Transaction
 from app.extensions import db
+from datetime import datetime, timezone
 
 
 class WalletService:
@@ -19,6 +20,9 @@ class WalletService:
         with db.session.begin_nested():
             wallet = Wallet.query.filter_by(id=wallet_id).with_for_update().one()
             wallet.balance += amount
+            transaction = Transaction(wallet_id=wallet_id, amount=amount,
+                                      transaction_type='credit', timestamp=datetime.now(timezone.utc))
+            db.session.add(transaction)  
             db.session.commit()
 
     @staticmethod
@@ -28,6 +32,9 @@ class WalletService:
             if wallet.balance - amount < wallet.minimum_balance:
                 raise ValueError("Debit amount exceeds minimum balance")
             wallet.balance -= amount
+            transaction = Transaction(wallet_id=wallet_id, amount=amount, transaction_type='debit',
+                                      timestamp=datetime.now(timezone.utc))
+            db.session.add(transaction)
             db.session.commit()
 
     @staticmethod
