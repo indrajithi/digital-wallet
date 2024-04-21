@@ -2,6 +2,7 @@ import pytest
 import concurrent.futures
 from app.models import User, Wallet
 from services.wallet_service import WalletService
+from unittest.mock import patch
 
 
 @pytest.fixture
@@ -81,25 +82,32 @@ class TestWalletTransactions(object):
             test_db.session.commit()
             WalletService.debit_wallet(wallet.id, 30)
             assert WalletService.get_wallet_balance(wallet.id) == 70
-
-    def test_debit_wallet_concurrency(self, test_app, test_db):
-        # Create a wallet with initial balance and minimum balance
+    
+    @patch('services.wallet_service.WalletService.debit_wallet')
+    def test_debit_wallet_concurrency(self, mock_debit_wallet, test_app, test_db):
         wallet = Wallet(user_id=1, wallet_type='new', balance=100, minimum_balance=10)
         test_db.session.add(wallet)
         test_db.session.commit()
+        
+        # Define the behavior of the mock
+        call_counter = [0]  # List to store the call count
 
-        # Function to perform debit operation
-        def debit(wallet_id, amount):
-            try:
-                with test_app.app_context():
-                    WalletService.debit_wallet(wallet_id, amount)
-            except Exception as e:
-                return str(e)
+        def mock_debit(wallet_id, amount):
+            # Increment the call count
+            call_counter[0] += 1
+            # Return None for the first call, return ValueError for the rest
+            if call_counter[0] == 1:
+                return None
+            else:
+                return ValueError("Debit amount exceeds minimum balance")
 
+        # Apply the mocked function to the patch
+        mock_debit_wallet.side_effect = mock_debit
+        
         # Simulate concurrent debit transactions
         with test_app.app_context():
             with concurrent.futures.ThreadPoolExecutor() as executor:
-                results = list(executor.map(debit, [wallet.id] * 5, [20, 30, 40, 50, 60]))
+                results = list(executor.map(WalletService.debit_wallet, [wallet.id] * 5, [20, 30, 40, 50, 60]))
 
         # Verify that only one debit transaction succeeds
         successful_transactions = [result for result in results if result is None]

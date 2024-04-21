@@ -34,7 +34,7 @@ def create_user():
 def create_wallet():
     user_id = request.json.get('user_id')
     wallet_type = request.json.get('wallet_type')
-    user = User.query.get(user_id)
+    user = db.session.get(User, user_id)
     if not user:
         return jsonify({'error': 'User not found'}), 404
 

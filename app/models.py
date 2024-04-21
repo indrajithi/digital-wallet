@@ -1,5 +1,5 @@
 from .extensions import db
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 class User(db.Model):
@@ -21,4 +21,4 @@ class Transaction(db.Model):
                           nullable=False)
     amount = db.Column(db.Float, nullable=False)
     transaction_type = db.Column(db.String(10), nullable=False)
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    timestamp = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
