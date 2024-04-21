@@ -5,7 +5,7 @@ from app import create_app, db
 @pytest.fixture(scope='function')
 def test_app():
     """Fixture to create a Flask app for testing."""
-    app = create_app()
+    app = create_app('testing')
     app.config.update({
         'TESTING': True,
         'SQLALCHEMY_DATABASE_URI': 'sqlite:///:memory:'
