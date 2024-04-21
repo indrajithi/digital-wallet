@@ -1,15 +1,21 @@
 from flask import Flask
-from .models import db
-from flask_migrate import Migrate
+from .extensions import db, migrate
 
 
-def create_app():
+def create_app(config_name=None):
+    """Create and configure an instance of the Flask application."""
     app = Flask(__name__)
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///wallet.db'
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
+    if config_name == 'testing':
+        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
+        app.config['TESTING'] = True
+        app.config['DEBUG'] = False
+    else:
+        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///wallet.db'
+        app.config['DEBUG'] = True
+    
     db.init_app(app)
-    Migrate(app, db)
+    migrate.init_app(app, db)
 
     from .routes import main as main_routes
     app.register_blueprint(main_routes)
