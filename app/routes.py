@@ -43,3 +43,42 @@ def create_wallet():
         return jsonify({'error': error}), 400
 
     return jsonify({'wallet_id': wallet.id}), 201
+
+
+@main.route('/wallet/<int:wallet_id>', methods=['GET'])
+def wallet_balance(wallet_id):
+    print("here>>>", wallet_id)
+    try:
+        balance = WalletService.get_wallet_balance(wallet_id)
+        return jsonify({'balance': balance}), 200
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 400
+
+
+@main.route('/wallet/<int:wallet_id>/credit', methods=['POST'])
+def credit_wallet(wallet_id):
+    amount = request.json.get('amount')
+    try:
+        WalletService.credit_wallet(wallet_id, amount)
+        return jsonify({'message': 'Wallet credited successfully'}), 200
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 400
+
+
+@main.route('/wallet/<int:wallet_id>/debit', methods=['POST'])
+def debit_wallet(wallet_id):
+    amount = request.json.get('amount')
+    try:
+        WalletService.debit_wallet(wallet_id, amount)
+        return jsonify({'message': 'Wallet debited successfully'}), 200
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 400
+
+
+@main.route('/wallet/<int:wallet_id>/transactions', methods=['GET'])
+def get_wallet_transactions(wallet_id):
+    try:
+        transactions = Transaction.query.filter_by(wallet_id=wallet_id).all()
+        return jsonify({'transactions': [{'id': t.id, 'amount': t.amount, 'transaction_type': t.transaction_type, 'timestamp': t.timestamp} for t in transactions]}), 200
+    except Exception:
+        return jsonify({'error': 'Cannot show the transactions for this wallet. It may not have any transactions!'}), 400

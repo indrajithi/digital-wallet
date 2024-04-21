@@ -3,7 +3,7 @@ import concurrent.futures
 from app.models import User, Wallet, Transaction
 from services.wallet_service import WalletService
 from unittest.mock import patch
-
+from datetime import datetime
 
 @pytest.fixture
 def create_test_user(test_db):
@@ -131,3 +131,27 @@ class TestWalletTransactions(object):
         # Verify that only one debit transaction succeeds
         successful_transactions = [result for result in results if result is None]
         assert len(successful_transactions) == 1
+
+
+class TestTotalTransaction:
+    @pytest.mark.parametrize("start_date, end_date, expected_credit, expected_debit", [
+        (datetime(2024, 1, 1), datetime(2024, 2, 1), 300.0, 200.0)
+    ])
+    def test_get_total_transactions_amount(self, test_app, test_db, start_date, end_date, expected_credit, expected_debit):
+        with test_app.app_context():
+            print(start_date)
+            # Create a wallet and perform some credit and debit transactions within the specified time range
+            wallet, _ = WalletService.create_wallet(user_id=1, wallet_type='standard')
+            WalletService.credit_wallet(wallet.id, 100.0)  # Credit 100
+            WalletService.debit_wallet(wallet.id, 50.0)   # Debit 50
+            WalletService.credit_wallet(wallet.id, 200.0)  # Credit 200
+            WalletService.debit_wallet(wallet.id, 150.0)   # Debit 150
+            WalletService.credit_wallet(wallet.id, 300.0)  # Credit 300
+            print(WalletService.get_wallet_balance(wallet.id))
+            print(Transaction.values())
+            # Get the total credited and debited amounts within the specified time range
+            total_credit, total_debit = WalletService.get_total_transactions_amount(wallet.id, start_date, end_date)
+
+            # Assert that the retrieved amounts match the expected values
+            assert total_credit == expected_credit
+            assert total_debit == expected_debit
