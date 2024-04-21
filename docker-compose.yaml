@@ -1,0 +1,20 @@
+version: '3'
+
+services:
+  web:
+    build: .
+    ports:
+      - "1970:1970"
+    volumes:
+      - .:/app
+      - flask_db:/app/db
+    environment:
+      FLASK_ENV: development
+      FLASK_APP: app.py
+
+  test:
+      build:
+        context: .
+        dockerfile: Dockerfile
+volumes:
+  flask_db:
