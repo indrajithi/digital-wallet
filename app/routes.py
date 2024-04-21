@@ -30,7 +30,7 @@ def create_user():
         return jsonify({'message': str(e)}), 409
 
 
-@main.route('/wallets', methods=['POST'])
+@main.route('/wallet', methods=['POST'])
 def create_wallet():
     user_id = request.json.get('user_id')
     wallet_type = request.json.get('wallet_type')
