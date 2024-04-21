@@ -8,7 +8,7 @@ def test_app():
     app = create_app()
     app.config.update({
         'TESTING': True,
-        'SQLALCHEMY_DATABASE_URI': 'sqlite:///:memory:'  # Use in-memory database for tests
+        'SQLALCHEMY_DATABASE_URI': 'sqlite:///:memory:'
     })
 
     # Push an application context for testing
@@ -23,3 +23,10 @@ def test_app():
 def test_client(test_app):
     """Provides a test client for the app."""
     return test_app.test_client()
+
+
+@pytest.fixture(scope='function')
+def test_db(test_app):
+    """Provides a transactional scope around tests."""
+    with test_app.app_context():
+        yield db
